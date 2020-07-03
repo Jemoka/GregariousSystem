@@ -9,7 +9,7 @@ with warnings.catch_warnings():
     import pickle
     import keras
     
-parser = argparse.ArgumentParser("(Easy) Gregarious-CLI")
+parser = argparse.ArgumentParser("(Easy) Gregarious-CLI by @jemoka")
 parser.add_argument("command", help="[create] corpus, [train] model, [tag] data, [interactive]")
 parser.add_argument("-i", "--input", help="input file (csv, gregariousdata)")
 parser.add_argument("-s", "--seed", help="network seed (h5)")
