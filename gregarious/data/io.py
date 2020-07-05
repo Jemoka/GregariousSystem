@@ -213,10 +213,63 @@ class DataFile(object):
         with open(self.directory, "wb") as df:
             pickle.dump(self, df)
 
-    def recompile(self, target_lang='en'):
-        input("I don't think you should be calling this. Would you like to continue?")
+    def _recompile(self, target_lang='en'):
+        input("I don't think you should be calling this. Would you like to continue? ")
         self.isCompiled = False
         self.compile(target_lang)
+
+    class csv_parser(object):
+        @staticmethod
+        def __optimistically_cast(d):
+            """__optimistically_cast
+            Cast to the most likely type
+            :param d: input 
+            """
+            
+            try:
+                res = float(d)
+                if res == int(res):
+                    res = int(res)
+            except ValueError:
+                if d.upper() == "T" or d.upper() == "TRUE":
+                    res = True
+                elif d.upper() == "F" or d.upper() == "FALSE":
+                    res = False
+                else:
+                    res = str(d)
+            return res
+
+        def parse(self, inp, descriptor):
+            with open(inp, 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                for indx, line in enumerate(reader):
+                    if indx == descriptor.header_index:
+                        header_items = list(line) 
+                        break
+                data_raw = {}
+                for item in header_items:
+                    data_raw[item] = []
+                for line in reader:
+                    for indx, item in enumerate(line):
+                        try:
+                            data_raw[header_items[indx]].append(self.__optimistically_cast(item))
+                        except IndexError:
+                            pass
+            self.importedData = {}
+            for key, val in data_raw.items():
+                if str(key) not in list(descriptor.header_keys.keys()):
+                    pass
+                else:
+                    self.importedData[descriptor.header_keys[str(key)]] = list(val)
+            return [self.importedData["handle"], self.importedData["name"], self.importedData["description"], self.importedData["status"]]
+
+        def write(self, oup, predictions, descriptor):
+            with open(oup, 'w') as opf:
+                opfWriter = csv.writer(opf)
+                self.importedData["isBot"] = predictions
+                newHeader = list(descriptor.header_keys.values())
+                opfWriter.writerow(newHeader)
+                opfWriter.writerows([list(i) for i in zip(*list(self.importedData.values()))])
 
 class CorpusManager(object):
     def __init__(self, datafile):

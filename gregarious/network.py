@@ -1,5 +1,6 @@
+import csv
 import uuid
-from .data.io import DataFile, CorpusManager
+from .data.io import DataDescription, DataFile, CorpusManager
 import sklearn
 from sklearn.model_selection import train_test_split  
 import tensorflow as tf
@@ -35,7 +36,20 @@ class Gregarious(object):
 
     def predict(self, handles, names, descs, statuses, f=False):
         predict_obj = self.manager.generate_predict_object({"handle":handles, "name":names, "description":descs, "status":statuses}, conform_lengths=self.__seed, f=f)
-        return self.model.predict(x=predict_obj)
+        try:
+            return self.model.predict(x=predict_obj)
+        except ValueError:
+            raise ValueError("Datafile supplied and model datafile mismatched.")
+
+    def predict_csv(self, inp, out, descriptor=DataDescription()):
+        print("Generating parser...")
+        parser = self.dataFile.csv_parser()
+        print("Calculating predictions...")
+        res = self.predict(*parser.parse(inp, descriptor))
+        print("Parsing predictions...")
+        res_tagged = [int(i[0]>i[1]) for i in res]
+        print("Writing predictions...")
+        parser.write(out, res_tagged, descriptor)
 
     def train(self, epochs=10, batch_size=10, validation_split=0, callbacks=None, save=None):
         X_train, X_test, y_train, y_test = [[], [], [], []], [[], [], [], []], [], []
